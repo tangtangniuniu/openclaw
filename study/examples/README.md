@@ -3,6 +3,7 @@
 本目录包含可直接改造的示例：
 
 - `multi-agent.openclaw.json5`：多 agent 配置草稿
+- `config-detailed.openclaw.json5`：较完整的学习型配置样例
 - `custom-skill/SKILL.md`：最小自定义 skill
 - `gateway-openai-chat.sh`：`/v1/chat/completions` 调用
 - `gateway-responses.sh`：`/v1/responses` 调用

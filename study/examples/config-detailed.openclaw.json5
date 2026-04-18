@@ -1,0 +1,79 @@
+{
+  gateway: {
+    mode: "local",
+    port: 18789,
+    auth: {
+      mode: "token",
+      token: "replace-me",
+    },
+    http: {
+      endpoints: {
+        chatCompletions: { enabled: true },
+        responses: { enabled: true },
+      },
+    },
+  },
+
+  session: {
+    dmScope: "per-channel-peer",
+    maintenance: {
+      mode: "warn",
+      pruneAfter: "30d",
+      maxEntries: 500,
+    },
+  },
+
+  agents: {
+    defaults: {
+      workspace: "~/.openclaw/workspace",
+      skills: ["lobster"],
+      subagents: {
+        maxSpawnDepth: 2,
+        maxChildrenPerAgent: 5,
+        maxConcurrent: 8,
+        runTimeoutSeconds: 900,
+      },
+    },
+    list: [
+      {
+        id: "main",
+        workspace: "~/.openclaw/workspace",
+      },
+      {
+        id: "work",
+        workspace: "~/.openclaw/workspace-work",
+        skills: ["research_kickoff", "lobster"],
+      },
+      {
+        id: "ops",
+        workspace: "~/.openclaw/workspace-ops",
+        skills: [],
+      },
+    ],
+  },
+
+  bindings: [
+    {
+      agentId: "work",
+      match: {
+        channel: "telegram",
+        accountId: "ops",
+      },
+    },
+    {
+      agentId: "ops",
+      match: {
+        channel: "discord",
+        accountId: "default",
+      },
+    },
+  ],
+
+  skills: {
+    entries: {
+      research_kickoff: {
+        enabled: true,
+      },
+    },
+  },
+}
