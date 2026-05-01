@@ -1,0 +1,120 @@
+{
+  gateway: {
+    mode: "local",
+    port: 18789,
+    auth: {
+      mode: "token",
+      token: "replace-me",
+    },
+    http: {
+      endpoints: {
+        chatCompletions: { enabled: true },
+        responses: { enabled: true },
+      },
+    },
+  },
+
+  agents: {
+    defaults: {
+      workspace: "~/.openclaw/workspace-main",
+      maxConcurrent: 3,
+      subagents: {
+        // Enterprise default: one coordinator can fan out to bounded specialists.
+        maxSpawnDepth: 2,
+        maxChildrenPerAgent: 4,
+        maxConcurrent: 6,
+        requireAgentId: true,
+        thinking: "medium",
+        runTimeoutSeconds: 900,
+        announceTimeoutMs: 120000,
+      },
+    },
+    list: [
+      {
+        id: "coordinator",
+        default: true,
+        name: "Coordinator",
+        workspace: "~/.openclaw/workspace-coordinator",
+        agentDir: "~/.openclaw/agents/coordinator/agent",
+        model: "openai/gpt-5.4",
+        skills: ["enterprise_router", "exec_brief"],
+        subagents: {
+          // Only the front-door orchestrator can delegate broadly.
+          allowAgents: ["research", "ops", "approvals"],
+        },
+      },
+      {
+        id: "research",
+        name: "Research",
+        workspace: "~/.openclaw/workspace-research",
+        agentDir: "~/.openclaw/agents/research/agent",
+        model: "openai/gpt-5.4",
+        skills: ["source_mapper", "risk_analyst"],
+      },
+      {
+        id: "ops",
+        name: "Operations",
+        workspace: "~/.openclaw/workspace-ops",
+        agentDir: "~/.openclaw/agents/ops/agent",
+        model: "anthropic/claude-sonnet-4-6",
+        skills: ["runbook_executor", "incident_review"],
+      },
+      {
+        id: "approvals",
+        name: "Approvals",
+        workspace: "~/.openclaw/workspace-approvals",
+        agentDir: "~/.openclaw/agents/approvals/agent",
+        model: "openai/gpt-5.4",
+        skills: ["change_control", "policy_gate"],
+      },
+    ],
+  },
+
+  // Route different enterprise surfaces to the right front door.
+  bindings: [
+    {
+      comment: "Primary enterprise intake",
+      agentId: "coordinator",
+      match: {
+        channel: "slack",
+        accountId: "corp",
+      },
+    },
+    {
+      comment: "Engineering incidents and bot operations",
+      agentId: "ops",
+      match: {
+        channel: "discord",
+        accountId: "engineering",
+      },
+    },
+    {
+      comment: "Leadership or compliance escalations",
+      agentId: "approvals",
+      match: {
+        channel: "telegram",
+        accountId: "leadership",
+      },
+    },
+    {
+      comment: "Async knowledge intake",
+      agentId: "research",
+      match: {
+        channel: "matrix",
+        accountId: "knowledge",
+      },
+    },
+  ],
+
+  tools: {
+    // Keep cross-agent handoff explicit instead of ambient.
+    agentToAgent: {
+      enabled: true,
+      allow: ["coordinator", "research", "ops", "approvals"],
+    },
+    sessions: {
+      // Let each orchestrated run inspect only its own subtree by default.
+      visibility: "tree",
+    },
+  },
+}

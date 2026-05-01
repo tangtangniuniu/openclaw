@@ -229,6 +229,7 @@ openclaw agents list --bindings
 完整配置例子见：
 
 - `examples/multi-agent.openclaw.json5`
+- `examples/multi-agent-enterprise.openclaw.json5`
 
 ## 5. 给独立 agent 配置独立 skill
 
@@ -267,6 +268,7 @@ openclaw agent --agent work --message "帮我输出研究启动清单"
 示例也已经放到：
 
 - `examples/multi-agent.openclaw.json5`
+- `examples/multi-agent-enterprise.openclaw.json5`
 
 ## 6. 配置详解
 

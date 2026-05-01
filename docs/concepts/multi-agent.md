@@ -269,6 +269,58 @@ Common channels supporting this pattern include:
 - `binding`: routes inbound messages to an `agentId` by `(channel, accountId, peer)` and optionally guild/team ids.
 - Direct chats collapse to `agent:<agentId>:<mainKey>` (per-agent “main”; `session.mainKey`).
 
+## Enterprise coordinator and specialists
+
+For enterprise deployments, keep one default **coordinator** agent as the front door, then route or delegate into narrower specialist agents such as research, operations, and approvals.
+
+Recommended guardrails:
+
+- Keep `agents.defaults.subagents.requireAgentId: true` so delegation is always explicit.
+- Keep `agents.defaults.subagents.maxSpawnDepth` low, usually `2`, so orchestrators can delegate once without creating an uncontrolled swarm.
+- Keep `agents.defaults.subagents.maxChildrenPerAgent` small enough to cap blast radius during incident spikes.
+- Give broad `subagents.allowAgents` only to the coordinator. Specialist agents should stay narrow by default.
+- Enable `tools.agentToAgent` only when you need cross-agent handoff, and keep the allowlist explicit.
+
+Example:
+
+```json5
+{
+  agents: {
+    defaults: {
+      subagents: {
+        maxSpawnDepth: 2,
+        maxChildrenPerAgent: 4,
+        maxConcurrent: 6,
+        requireAgentId: true,
+      },
+    },
+    list: [
+      {
+        id: "coordinator",
+        default: true,
+        subagents: {
+          allowAgents: ["research", "ops", "approvals"],
+        },
+      },
+      { id: "research" },
+      { id: "ops" },
+      { id: "approvals" },
+    ],
+  },
+  tools: {
+    agentToAgent: {
+      enabled: true,
+      allow: ["coordinator", "research", "ops", "approvals"],
+    },
+    sessions: {
+      visibility: "tree",
+    },
+  },
+}
+```
+
+This shape keeps the control plane simple: a single broad delegator, explicit specialist targets, bounded fanout, and no cross-agent visibility outside the current execution tree unless you opt in.
+
 ## Platform examples
 
 ### Discord bots per agent
